@@ -2,10 +2,10 @@
 kpi_agent.py
 ============
 Agente de KPIs financeiros para o Dashboard Executivo — Deloitte.
-Usa Anthropic Claude com o modelo claude-haiku-4-5-20251001.
+Usa OpenRouter com o modelo anthropic/claude-3-5-haiku.
 
 Variável de ambiente obrigatória (defina no .env):
-    ANTHROPIC_API_KEY=sk-ant-sua-chave-aqui
+    OPENROUTER_API_KEY=sk-or-v1-sua-chave-aqui
 
 Histórico salvo em: historico_chat.json (mesma pasta do app_v1.py)
 """
@@ -17,7 +17,7 @@ import html
 from datetime import datetime
 from pathlib import Path
 
-import anthropic
+from openai import OpenAI
 import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
@@ -730,19 +730,18 @@ def _resumo_df(df: pd.DataFrame | None) -> str:
 
 
 def _chamar_api(messages: list[dict], contexto_df: str) -> str:
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    api_key = os.environ.get("OPENROUTER_API_KEY", "")
     if not api_key:
-        return "⚠️ **ANTHROPIC_API_KEY** não configurada. Adicione no `.env`:\n```\nANTHROPIC_API_KEY=sk-ant-...\n```"
-    client = anthropic.Anthropic(api_key=api_key)
-    msgs_api = [{"role": m["role"], "content": m["content"]} for m in messages]
-    system_prompt = _SYSTEM_PROMPT + "\n\n## DADOS REAIS\n" + contexto_df
-    resp = client.messages.create(
-        model="claude-haiku-4-5-20251001",
+        return "⚠️ **OPENROUTER_API_KEY** não configurada. Adicione no `.env`:\n```\nOPENROUTER_API_KEY=sk-or-v1-...\n```"
+    client = OpenAI(api_key=api_key, base_url="https://openrouter.ai/api/v1")
+    msgs_api = [{"role": "system", "content": _SYSTEM_PROMPT + "\n\n## DADOS REAIS\n" + contexto_df}]
+    msgs_api += [{"role": m["role"], "content": m["content"]} for m in messages]
+    resp = client.chat.completions.create(
+        model="anthropic/claude-3-5-haiku",
         max_tokens=1000,
-        system=system_prompt,
         messages=msgs_api,
     )
-    return resp.content[0].text
+    return resp.choices[0].message.content
 
 
 def _resumir_valor_complexo(valor) -> str:

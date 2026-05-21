@@ -42,7 +42,7 @@ create_db()
 # ─────────────────────────────────────────────────────────────────────────────
 
 st.set_page_config(
-    page_title="Dashboard Executivo — Deloitte Anthropic",
+    page_title="Dashboard Executivo — Deloitte",
     layout="wide",
 )
 
