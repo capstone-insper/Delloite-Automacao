@@ -2,10 +2,10 @@
 kpi_agent.py
 ============
 Agente de KPIs financeiros para o Dashboard Executivo — Deloitte.
-Usa Groq (gratuito) com o modelo llama-3.3-70b-versatile.
+Usa Anthropic Claude com o modelo claude-haiku-4-5-20251001.
 
 Variável de ambiente obrigatória (defina no .env):
-    GROQ_API_KEY=gsk_sua-chave-aqui
+    ANTHROPIC_API_KEY=sk-ant-sua-chave-aqui
 
 Histórico salvo em: historico_chat.json (mesma pasta do app_v1.py)
 """
@@ -17,7 +17,7 @@ import html
 from datetime import datetime
 from pathlib import Path
 
-from groq import Groq
+import anthropic
 import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
@@ -730,14 +730,19 @@ def _resumo_df(df: pd.DataFrame | None) -> str:
 
 
 def _chamar_api(messages: list[dict], contexto_df: str) -> str:
-    api_key = os.environ.get("GROQ_API_KEY", "")
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
     if not api_key:
-        return "⚠️ **GROQ_API_KEY** não configurada. Adicione no `.env`:\n```\nGROQ_API_KEY=gsk_...\n```"
-    client = Groq(api_key=api_key)
-    msgs_api = [{"role": "system", "content": _SYSTEM_PROMPT + "\n\n## DADOS REAIS\n" + contexto_df}]
-    msgs_api += [{"role": m["role"], "content": m["content"]} for m in messages]
-    resp = client.chat.completions.create(model="llama-3.3-70b-versatile", messages=msgs_api, max_tokens=1000)
-    return resp.choices[0].message.content
+        return "⚠️ **ANTHROPIC_API_KEY** não configurada. Adicione no `.env`:\n```\nANTHROPIC_API_KEY=sk-ant-...\n```"
+    client = anthropic.Anthropic(api_key=api_key)
+    msgs_api = [{"role": m["role"], "content": m["content"]} for m in messages]
+    system_prompt = _SYSTEM_PROMPT + "\n\n## DADOS REAIS\n" + contexto_df
+    resp = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=1000,
+        system=system_prompt,
+        messages=msgs_api,
+    )
+    return resp.content[0].text
 
 
 def _resumir_valor_complexo(valor) -> str:
