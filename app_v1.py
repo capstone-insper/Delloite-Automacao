@@ -607,7 +607,7 @@ def _parse_mes(s: str):
 @st.cache_data(show_spinner="Carregando dados…")
 def carregar_dados():
     # ── Operacional ───────────────────────────────────────────────────────────
-    df_raw = _carregar_txt_raw(PASTA_ENTRADA / "data1.csv.txt")
+    df_raw = _carregar_txt_raw(PASTA_ENTRADA / "data1_expandido.csv.txt")
     if df_raw.empty:
         return pd.DataFrame(), pd.DataFrame()
 
@@ -657,7 +657,7 @@ def carregar_dados():
     df_op["receita_ajustada"] = rl - al - co
 
     # ── Orçamento ─────────────────────────────────────────────────────────────
-    df_orc_raw = _carregar_txt_raw(PASTA_ENTRADA / "BookService.txt")
+    df_orc_raw = _carregar_txt_raw(PASTA_ENTRADA / "BookService_expandido.txt")
     df_orc = pd.DataFrame()
 
     if not df_orc_raw.empty:
